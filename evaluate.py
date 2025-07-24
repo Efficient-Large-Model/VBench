@@ -36,8 +36,7 @@ def parse_args():
     )
     parser.add_argument(
         "--load_ckpt_from_local",
-        type=bool,
-        required=False,
+        action='store_true',
         help="whether load checkpoints from local default paths (assuming you have downloaded the checkpoints locally",
     )
     parser.add_argument(
@@ -135,10 +134,11 @@ def main():
         kwargs['category'] = args.category
 
     kwargs['imaging_quality_preprocessing_mode'] = args.imaging_quality_preprocessing_mode
-
+    assert len(args.dimension) == 1, "Only one dimension is supported for now"
+    save_name = f'results_{args.dimension[0]}'
     my_VBench.evaluate(
         videos_path = args.videos_path,
-        name = f'results_{current_time}',
+        name = save_name,
         prompt_list=prompt, # pass in [] to read prompt from filename
         dimension_list = args.dimension,
         local=args.load_ckpt_from_local,

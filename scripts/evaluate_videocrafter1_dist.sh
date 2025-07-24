@@ -32,6 +32,9 @@ GPUS=$((REAL_GPUS < DEFAULT_GPUS ? REAL_GPUS : DEFAULT_GPUS))
 
 echo "Using $GPUS GPUs"
 
+export VBENCH_CACHE_DIR=/lustre/fs12/portfolios/nvr/users/jinchengy/yuyang/VBench/vbench_checkpoint_cache
+export PATH=/lustre/fs12/portfolios/nvr/users/jinchengy/miniforge3/envs/vbench/bin:$PATH
+
 # Loop over each dimension
 for i in "${!dimensions[@]}"; do
     # Get the dimension and corresponding folder
@@ -40,9 +43,10 @@ for i in "${!dimensions[@]}"; do
 
     # Construct the video path
     videos_path="${base_path}/${folder}/1024x576"
+    output_path="${base_path}/results"
     echo "$dimension $videos_path"
 
     # Run the evaluation script
     torchrun --nproc_per_node=${GPUS} --standalone \
-        evaluate.py --videos_path $videos_path --dimension $dimension
+        evaluate.py --videos_path $videos_path --dimension $dimension --load_ckpt_from_local --output_path $output_path
 done
