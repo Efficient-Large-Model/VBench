@@ -3,3 +3,6 @@ include requirements.txt
 recursive-include vbench/third_party *.yaml
 recursive-include vbench *.json
 recursive-include vbench *.txt
+recursive-include vbench2_beta_i2v/third_party *.yaml
+recursive-include vbench2_beta_i2v *.json
+recursive-include vbench2_beta_i2v *.txt

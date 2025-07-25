@@ -5,7 +5,14 @@ from tqdm import tqdm
 from math import ceil
 from vbench2_beta_i2v.third_party.cotracker.utils.visualizer import Visualizer
 from vbench2_beta_i2v.utils import load_video, load_dimension_info
-
+from vbench.distributed import (
+    get_world_size,
+    get_rank,
+    all_gather,
+    barrier,
+    distribute_list_to_rank,
+    gather_list_of_dict,
+)
 
 def transform(vector):
     x = np.mean([item[0] for item in vector])
@@ -180,7 +187,7 @@ def camera_motion(camera, video_list):
         "zoom_out":[],
         "static":[],
     }
-    for video_path in tqdm(video_list):
+    for video_path in tqdm(video_list, disable=get_rank() > 0):
         target_type = get_type(os.path.basename(video_path))
         predict_results = camera.predict(video_path)
 
@@ -200,7 +207,21 @@ def camera_motion(camera, video_list):
 def compute_camera_motion(json_dir, device, submodules_list, **kwargs):
     camera = CameraPredict(device, submodules_list)
     video_list, _ = load_dimension_info(json_dir, dimension='camera_motion', lang='en')
+    video_list = distribute_list_to_rank(video_list)
     all_results, diff_type_results, video_results = camera_motion(camera, video_list)
+    if get_world_size() > 1:
+        video_results = gather_list_of_dict(video_results)
+        all_results = sum([d['video_results'] for d in video_results]) / len(video_results)
+        diff_type_results = {}
+        for data_info in video_results:
+            prompt_type = data_info['prompt_type']
+            video_score = data_info['video_results']
+            if prompt_type not in diff_type_results:
+                diff_type_results[prompt_type] = []
+            diff_type_results[prompt_type].append(video_score)
+        for key, value in diff_type_results.items():
+            diff_type_results[key] = np.mean(value)
+            
     return all_results, diff_type_results, video_results
 
 

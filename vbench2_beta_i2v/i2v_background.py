@@ -13,6 +13,15 @@ import torchvision.transforms as transforms
 
 from dreamsim import dreamsim
 from vbench2_beta_i2v.utils import load_video, load_i2v_dimension_info, dreamsim_transform, dreamsim_transform_Image
+from vbench.distributed import (
+    get_world_size,
+    get_rank,
+    all_gather,
+    barrier,
+    distribute_list_to_rank,
+    gather_list_of_dict,
+)
+
 import logging
 logging.basicConfig(level = logging.INFO,format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -28,7 +37,7 @@ def i2v_background(dream_model, video_pair_list, device):
     image_transform = dreamsim_transform_Image(224)
     frames_transform = dreamsim_transform(224)
 
-    for image_path, video_path in tqdm(video_pair_list):
+    for image_path, video_path in tqdm(video_pair_list, disable=get_rank() > 0):
         # input image preprocess & extract feature
         input_image = image_transform(Image.open(image_path))
         input_image = input_image.unsqueeze(0)
@@ -66,11 +75,16 @@ def i2v_background(dream_model, video_pair_list, device):
 
 
 def compute_i2v_background(json_dir, device, submodules_list, **kwargs):
+    pre_trained_model_path = os.environ.get('VBENCH_CACHE_DIR', './models')
     
-    dream_model, preprocess = dreamsim(pretrained=True)
+    dream_model, preprocess = dreamsim(pretrained=True, cache_dir=pre_trained_model_path, device=device)
     resolution = submodules_list['resolution']
     logger.info("Initialize DreamSim success")
     
     video_pair_list, _ = load_i2v_dimension_info(json_dir, dimension='i2v_background', lang='en', resolution=resolution)
+    video_pair_list = distribute_list_to_rank(video_pair_list)
     all_results, video_results = i2v_background(dream_model, video_pair_list, device)
+    if get_world_size() > 1:
+        video_results = gather_list_of_dict(video_results)
+        all_results = sum([d['video_results'] for d in video_results]) / len(video_results)
     return all_results, video_results
