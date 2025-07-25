@@ -1,5 +1,10 @@
 ![vbench_logo](https://raw.githubusercontent.com/Vchitect/VBench/master/asset/vbench_logo_github_20240605.jpg)
 
+**Please use this version if you want to inference vbench i2v**
+- Revise several hard-code path with environment variable
+- Support distributed inference
+- Refine package structure
+
 **How to Reach Us:**
 - Code Issues: Please open an [issue](https://github.com/Vchitect/VBench/issues) in our GitHub repository for any problems or bugs.
 - Evaluation Requests: To submit your sampled videos for evaluation, create an [issue](https://github.com/Vchitect/VBench/issues) titled "Evaluation Request - Model Name" in the GitHub repository with the relevant model information.
