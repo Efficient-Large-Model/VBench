@@ -158,7 +158,8 @@ class VBench(object):
                             if verbose:
                                 print0(f'Successfully found video: {intended_video_name}')
                         else:
-                            print0(f'WARNING!!! This required video is not found! Missing benchmark videos can lead to unfair evaluation result. The missing video is: {intended_video_name}')
+                            raise ValueError(f'This required video is not found! Missing benchmark videos can lead to unfair evaluation result. The missing video is: {intended_video_name}')
+                            # print0(f'WARNING!!! This required video is not found! Missing benchmark videos can lead to unfair evaluation result. The missing video is: {intended_video_name}')
                     cur_full_info_list.append(prompt_dict)
 
         
